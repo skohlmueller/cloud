@@ -6,6 +6,8 @@ In order to achieve this setup, we needed to use CloudWatch to forward data cros
 
 The centralization of the VPC Flow Logs was done into the log-archive account.
 
+![Overview](splunk-vpc-flow-logs.png)
+
 ## Kinesis Stream
 
 A Kinesis stream was created with the following details:
