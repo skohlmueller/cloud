@@ -4,7 +4,7 @@ While there are a few different ways to get VPC Flow Logs into Splunk in a Multi
 
 In order to achieve this setup, we needed to use CloudWatch to forward data cross-account.
 
-The centralization of the VPC Flow Logs was done into the Logging Account.
+The centralization of the VPC Flow Logs was done into the log-archive account.
 
 ## Kinesis Stream
 
@@ -59,15 +59,11 @@ Note: At the moment of the implementation of this setup the CloudWatch destinati
       "Effect": "Allow",
       "Principal": {
         "AWS": [
-          "303982966001",
-          "132352626121",
-          "560558005530",
-          "693544650819",
-          "331035395799",
-          "702855181206",
-          "991280305389",
-          "817512644909",
-          "227257552907"
+          "<member-account-0>",
+          "<member-account-1>",
+          "<member-account-2>",
+          "<member-account-3>",
+          "<member-account-5>"
         ]
       },
       "Action": "logs:PutSubscriptionFilter",
@@ -97,9 +93,9 @@ ARN:
 arn:aws:iam::<log-archive-account-id>:role/Cenovus-CWL-to-Kinesis-for-FlowLogs-to-Splunk-role
 ```
 
-```json
-Trust Policy:
+### Trust Policy:
 
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -114,7 +110,7 @@ Trust Policy:
 }
 ```
 
-IAM Policy (in line)
+### IAM Policy (in line)
 
 ```json
 {
@@ -141,7 +137,7 @@ IAM Policy (in line)
 
 ## CloudWatch Log Group
 
-To leverage the setup implemented in the Logging account (described above), each AWS Account that has a VPC that needs monitoring, will have to have a dedicated CloudWatch Log Group created.
+To leverage the setup implemented in the log-archive account (described above), each AWS Account that has a VPC that needs monitoring, will have to have a dedicated CloudWatch Log Group created.
 
 ```
 Name:
@@ -151,7 +147,7 @@ ARN:
 arn:aws:logs:us-west-2:<member-account-id>:log-group:VPCFlowLogs:*
 ```
 
-Subscription:
+### Subscription:
 
 ```
 aws logs put-subscription-filter \
@@ -163,7 +159,7 @@ aws logs put-subscription-filter \
 
 If this is successful, the subscription can be seen in the CloudWatch Log Group.
 
-Note: the subscription filter above is the method that allows pushing data cross-account; as it can be seen, the destination-arn is pointing to the CloudWatch Logs destination created in the Logging account.
+Note: the subscription filter above is the method that allows pushing data cross-account; as it can be seen, the destination-arn is pointing to the CloudWatch Logs destination created in the log-archive account.
 
 ## Flow Logs
 
@@ -183,10 +179,10 @@ Destination log group:
 VPCFlowLogs
 
 IAM Role:
-arn:aws:iam::<wmember-account-id>:role/Cenovus-publish-to-CWL-role
+arn:aws:iam::<member-account-id>:role/Cenovus-publish-to-CWL-role
 ```
 
-Trust policy:
+### Trust policy:
 
 ```json
 {
@@ -204,7 +200,7 @@ Trust policy:
 }
 ```
 
-IAM Policy:
+### IAM Policy:
 
 ```json
 {
@@ -218,12 +214,12 @@ IAM Policy:
     {
       "Effect": "Allow",
       "Action": ["logs:CreateLogStream", "logs:DescribeLogStreams"],
-      "Resource": "arn:aws:logs:us-west-2:[aws-account-id]:log-group:VPCFlowLogs:*"
+      "Resource": "arn:aws:logs:us-west-2:[member-account-id]:log-group:VPCFlowLogs:*"
     },
     {
       "Effect": "Allow",
       "Action": "logs:PutLogEvents",
-      "Resource": "arn:aws:logs:us-west-2:[aws-account-id]:log-group:VPCFlowLogs:log-stream:*"
+      "Resource": "arn:aws:logs:us-west-2:[member-account-id]:log-group:VPCFlowLogs:log-stream:*"
     }
   ]
 }
